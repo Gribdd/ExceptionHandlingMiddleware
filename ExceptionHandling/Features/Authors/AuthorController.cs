@@ -1,12 +1,14 @@
 ﻿using ExceptionHandling.Database;
-using ExceptionHandling.Database.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ExceptionHandling.Mapping;
+using ExceptionHandling.Database.Entities;
 using Microsoft.AspNetCore.Http;
+using ExceptionHandling.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-namespace ExceptionHandling.Features;
+namespace ExceptionHandling.Features.Authors;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -20,12 +22,14 @@ public class AuthorController(
     /// </summary>
     /// <returns>All authors</returns>
     [HttpGet(Name = "GetAuthors")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<AuthorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Get()
+    public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
         var authors = await context.Authors.ToListAsync();
-        return Ok(authors);
+        var authorDtos = authors.Select(a => a.MapToAuthorDto()).ToList();
+
+        return Ok(authorDtos);
     }
 
     // GET api/<AuthorController>/5
@@ -35,7 +39,7 @@ public class AuthorController(
     /// <param name="id"></param>
     /// <returns>The author by Id</returns>
     [HttpGet("{id}", Name = "GetAuthorById")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AuthorDto),StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesDefaultResponseType]
     public async Task<IActionResult> Get(Guid id)
@@ -43,11 +47,14 @@ public class AuthorController(
         var author = await context.Authors
             .Include(a => a.Books)
             .FirstOrDefaultAsync(a => a.Id == id);
+
         if (author == null)
         {
             return NotFound(new { Message = $"Author with ID {id} not found." });
         }
-        return Ok(author);
+
+        var authorDto = author.MapToAuthorDto();
+        return Ok(authorDto);
     }
 
     // POST api/<AuthorController>
@@ -66,20 +73,20 @@ public class AuthorController(
     ///
     /// </remarks>
     [HttpPost(Name = "CreateAuthor")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesDefaultResponseType]
-    public async Task<IActionResult> Post([FromBody] Author author)
+    [ProducesResponseType(typeof(AuthorDto), StatusCodes.Status201Created)]
+    public async Task<IActionResult> Post([FromBody] CreateAuthorRequest request, CancellationToken cancellationToken)
     {
-        if (author == null)
-            return BadRequest(new { Message = "Invalid author data." });
+        var author = new Author
+        {
+            Id = Guid.NewGuid(),
+            Name = request.Name,
+        };
 
-        author.Id = Guid.NewGuid(); // ensure ID is set
         context.Authors.Add(author);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
 
-        // Return 201 with location header
-        return CreatedAtRoute("GetAuthorById", new { id = author.Id }, author);
+        return CreatedAtAction(nameof(Get), new { id = author.Id }, author.MapToAuthorDto());
     }
 
     // PUT api/<AuthorController>/5

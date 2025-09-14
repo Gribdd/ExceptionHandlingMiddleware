@@ -21,9 +21,9 @@ public class AuditTrailConfiguration : IEntityTypeConfiguration<AuditTrail>
 
         builder.Property(e => e.TrailType).HasConversion<string>();
 
-        builder.Property(e => e.ChangedColumns);
-        builder.Property(e => e.OldValues);
-        builder.Property(e => e.NewValues);
+        builder.Property(e => e.ChangedColumn);
+        builder.Property(e => e.OldValue);
+        builder.Property(e => e.NewValue);
 
         builder.HasOne(e => e.User)
             .WithMany()

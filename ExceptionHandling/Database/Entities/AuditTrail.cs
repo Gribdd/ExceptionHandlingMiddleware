@@ -16,12 +16,14 @@ public class AuditTrail
 
     public string? PrimaryKey { get; set; }
 
-    public Dictionary<string, object?> OldValues { get; set; } = [];
+    public string? OldValue { get; set; }
+    public string? NewValue { get; set; }
 
-    public Dictionary<string, object?> NewValues { get; set; } = [];
-
-    public List<string> ChangedColumns { get; set; } = [];
+    public string? ChangedColumn { get; set; }
 }
+
+
+
 
 public enum TrailType : byte
 {
