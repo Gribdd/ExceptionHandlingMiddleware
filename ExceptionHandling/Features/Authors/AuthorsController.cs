@@ -1,10 +1,11 @@
-﻿using ExceptionHandling.Database;
+﻿using System.Threading;
+using ExceptionHandling.Database;
+using ExceptionHandling.Database.Entities;
+using ExceptionHandling.Mapping;
+using ExceptionHandling.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ExceptionHandling.Mapping;
-using ExceptionHandling.Database.Entities;
-using Microsoft.AspNetCore.Http;
-using ExceptionHandling.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,7 +13,7 @@ namespace ExceptionHandling.Features.Authors;
 
 [Route("api/[controller]")]
 [ApiController]
-public class AuthorController(
+public class AuthorsController(
     ApplicationDbContext context) 
     : ControllerBase
 {
@@ -26,7 +27,7 @@ public class AuthorController(
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
-        var authors = await context.Authors.ToListAsync();
+        var authors = await context.Authors.ToListAsync(cancellationToken);
         var authorDtos = authors.Select(a => a.MapToAuthorDto()).ToList();
 
         return Ok(authorDtos);
@@ -37,16 +38,17 @@ public class AuthorController(
     /// Gets an Author by Id
     /// </summary>
     /// <param name="id"></param>
+    /// <param name="cancellationToken"></param>
     /// <returns>The author by Id</returns>
     [HttpGet("{id}", Name = "GetAuthorById")]
     [ProducesResponseType(typeof(AuthorDto),StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesDefaultResponseType]
-    public async Task<IActionResult> Get(Guid id)
+    public async Task<IActionResult> Get([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var author = await context.Authors
             .Include(a => a.Books)
-            .FirstOrDefaultAsync(a => a.Id == id);
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
         if (author == null)
         {
@@ -61,12 +63,13 @@ public class AuthorController(
     /// <summary>
     /// Creates an Author
     /// </summary>
-    /// <param name="author"></param>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
     /// <returns>A newly created Author</returns>
     /// /// <remarks>
     /// Sample request:
     ///
-    ///     POST /Todo
+    ///     POST /Authors
     ///     {
     ///        "name": "Michael Jackstone",
     ///     }
@@ -90,37 +93,79 @@ public class AuthorController(
     }
 
     // PUT api/<AuthorController>/5
+    /// <summary>
+    /// Updates an Author by Id
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>Not Found and No content when successful </returns>
+    /// /// <remarks>
+    /// Sample request:
+    ///
+    ///     PUT /Authors/5
+    ///     {
+    ///        "name": "Michael Jackson",
+    ///     }
+    ///
+    /// </remarks>
     [HttpPut("{id}", Name = "UpdateAuthorById")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesDefaultResponseType]
-    public async Task<IActionResult> Put(Guid id, [FromBody] Author updatedAuthor)
+    public async Task<IActionResult> Put([FromRoute] Guid id, [FromBody] UpdateAuthorRequest request, CancellationToken cancellationToken)
     {
-        var author = await context.Authors.FindAsync(id);
+        var author = await context.Authors.FindAsync(id, cancellationToken);
         if (author == null)
             return NotFound(new { Message = $"Author with ID {id} not found." });
 
-
+        author.Name = request.Name;
         context.Entry(author).State = EntityState.Modified;
-        await context.SaveChangesAsync();
 
-        return NoContent(); 
+        await context.SaveChangesAsync(cancellationToken);
+        return NoContent();
     }
 
     // DELETE api/<AuthorController>/5
+    /// <summary>
+    /// Soft deletes an author by id
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>No content when deleting successfully</returns>
+
     [HttpDelete("{id}", Name = "DeleteAuthorById")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesDefaultResponseType]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        var author = await context.Authors.FindAsync(id);
+        var author = await context.Authors.FindAsync(id, cancellationToken);
         if (author == null)
             return NotFound(new { Message = $"Author with ID {id} not found." });
 
         context.Authors.Remove(author);
         
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(cancellationToken);
         return NoContent(); 
     }
+
+    // GET api/authors/entities
+    /// <summary>
+    /// Gets all authors as entity objects (not DTOs).
+    /// </summary>
+    /// <returns>All author entities</returns>
+    [HttpGet("entities", Name = "GetAuthorsEntities")]
+    [ProducesResponseType(typeof(List<Author>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetEntities(CancellationToken cancellationToken)
+    {
+        var authors = await context.Authors
+            .Include(a => a.Books)    // eager load books if you want full entity graph
+            .ToListAsync(cancellationToken);
+
+        return Ok(authors);
+    }
+
+
 }

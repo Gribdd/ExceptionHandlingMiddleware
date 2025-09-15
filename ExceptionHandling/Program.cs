@@ -1,5 +1,6 @@
 using System.Reflection;
 using ExceptionHandling.Database;
+using ExceptionHandling.Services;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.OpenApi.Models;
 using static System.Net.Mime.MediaTypeNames;
@@ -35,8 +36,11 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
 });
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentSessionProvider, CurrentSessionProvider>();
 builder.Services.AddDbContext<ApplicationDbContext>();
 builder.Services.AddSingleton<AuditableInterceptor>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

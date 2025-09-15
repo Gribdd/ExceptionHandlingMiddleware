@@ -14,4 +14,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Books\" />
+    <Folder Include="Features\Users\" />
+  </ItemGroup>
+
 </Project>

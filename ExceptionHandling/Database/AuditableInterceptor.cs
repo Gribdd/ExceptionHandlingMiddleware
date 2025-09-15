@@ -16,7 +16,7 @@ public class AuditableInterceptor : SaveChangesInterceptor
         foreach (var entry in entries)
         {
             if (entry.State == EntityState.Added)
-            {
+            {   
                 entry.Entity.CreatedAtUtc = DateTime.UtcNow;
                 entry.Entity.CreatedBy = "system"; // In real scenarios, replace with actual user
             }
