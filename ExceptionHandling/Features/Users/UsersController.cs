@@ -3,12 +3,15 @@ using ExceptionHandling.Database.Entities;
 using ExceptionHandling.Features.Authors;
 using ExceptionHandling.Mapping;
 using ExceptionHandling.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace ExceptionHandling.Features.Users;
+
+[Authorize]
 [Route("api/users")]
 [ApiController]
 public class UsersController(
@@ -50,6 +53,7 @@ public class UsersController(
     }
 
     // POST api/<UsersController>
+    [AllowAnonymous]
     [HttpPost(Name = "CreateUser")]
     [ProducesDefaultResponseType]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
@@ -118,4 +122,6 @@ public class UsersController(
 
         return Ok(users);
     }
+
+
 }

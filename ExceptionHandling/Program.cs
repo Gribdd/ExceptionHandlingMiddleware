@@ -1,7 +1,11 @@
-using System.Reflection;
+﻿using System.Reflection;
+using System.Text;
+using ExceptionHandling.Configuration;
 using ExceptionHandling.Database;
 using ExceptionHandling.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -31,6 +35,33 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
+    // 🔑 Add JWT auth definition
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter 'Bearer' [space] and then your token.\n\nExample: \"Bearer eyJhbGciOi...\""
+    });
+
+    // 🔒 Add JWT requirement so Swagger UI sends the token
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
     // using System.Reflection;
     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
@@ -40,6 +71,29 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentSessionProvider, CurrentSessionProvider>();
 builder.Services.AddDbContext<ApplicationDbContext>();
 builder.Services.AddSingleton<AuditableInterceptor>();
+
+
+builder.Services.AddOptions<AuthConfiguration>()
+    .Bind(builder.Configuration.GetSection(nameof(AuthConfiguration)));
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["AuthConfiguration:Issuer"],
+        ValidAudience = builder.Configuration["AuthConfiguration:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["AuthConfiguration:Key"]!))
+    };
+});
+builder.Services.AddAuthentication();
 
 var app = builder.Build();
 
@@ -93,7 +147,8 @@ app.UseStatusCodePages(async statusCodeContext =>
 
 //redirects to an url
 //app.UseStatusCodePagesWithRedirects("/Error/{0}");
-
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
