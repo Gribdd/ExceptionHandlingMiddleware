@@ -32,4 +32,11 @@ public static class MappingExtensions
                 Author = null!
             }).ToList()
         };
+
+    public static UserDto MapToUserDto(this User entity)
+        => new()
+        {
+            Id = entity.Id,
+            Email = entity.Email
+        };
 }

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ExceptionHandling.Features.Authors;
 
-[Route("api/[controller]")]
+[Route("api/authors")]
 [ApiController]
 public class AuthorsController(
     ApplicationDbContext context) 
@@ -21,7 +21,7 @@ public class AuthorsController(
     /// <summary>
     /// Gets all authors
     /// </summary>
-    /// <returns>All authors</returns>
+    /// <returns>All authors</returns>    
     [HttpGet(Name = "GetAuthors")]
     [ProducesResponseType(typeof(List<AuthorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]

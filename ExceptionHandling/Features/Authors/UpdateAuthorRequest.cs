@@ -2,4 +2,3 @@
 
 public record UpdateAuthorRequest(
     string Name);
-
