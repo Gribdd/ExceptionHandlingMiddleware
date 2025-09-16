@@ -27,8 +27,11 @@ public class AuthorsController(
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
-        var authors = await context.Authors.ToListAsync(cancellationToken);
-        var authorDtos = authors.Select(a => a.MapToAuthorDto()).ToList();
+        var authorDtos = await context.Authors
+            .Include(a => a.Books)
+            .AsNoTracking()
+            .Select(a => a.MapToAuthorDto())
+            .ToListAsync(cancellationToken);
 
         return Ok(authorDtos);
     }
@@ -48,6 +51,7 @@ public class AuthorsController(
     {
         var author = await context.Authors
             .Include(a => a.Books)
+            .AsNoTracking() 
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
         if (author == null)
@@ -162,10 +166,9 @@ public class AuthorsController(
     {
         var authors = await context.Authors
             .Include(a => a.Books)    // eager load books if you want full entity graph
+            .AsNoTracking()
             .ToListAsync(cancellationToken);
 
         return Ok(authors);
     }
-
-
 }

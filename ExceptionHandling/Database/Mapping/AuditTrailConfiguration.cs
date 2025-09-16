@@ -8,6 +8,7 @@ public class AuditTrailConfiguration : IEntityTypeConfiguration<AuditTrail>
 {
     public void Configure(EntityTypeBuilder<AuditTrail> builder)
     {
+        builder.ToTable("audit_trails");
         builder.HasKey(e => e.Id);
 
         builder.HasIndex(e => e.EntityName);
