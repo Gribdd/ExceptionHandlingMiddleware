@@ -7,22 +7,22 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace ExceptionHandling.Features.Users;
 
 [Authorize]
 [Route("api/users")]
 [ApiController]
-public class UsersController(
-    ApplicationDbContext context,
-    CancellationToken cancellationToken = default) : ControllerBase
+public class UsersController(ApplicationDbContext context) : ControllerBase
 {
-    // GET: api/<UsersController>
+    // GET: api/users
+    /// <summary>
+    /// Retrieves all users.
+    /// </summary>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>A list of users as DTOs.</returns>
     [HttpGet(Name = "GetUsers")]
     [ProducesResponseType(typeof(List<UserDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Get()
+    public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
         var users = await context.Users
             .AsNoTracking()
@@ -32,12 +32,17 @@ public class UsersController(
         return Ok(users);
     }
 
-    // GET api/<UsersController>/5
+    // GET api/users/{id}
+    /// <summary>
+    /// Retrieves a specific user by ID.
+    /// </summary>
+    /// <param name="id">The unique identifier of the user.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>The user DTO if found, otherwise 404 Not Found.</returns>
     [HttpGet("{id}", Name = "GetUserById")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesDefaultResponseType]
-    public async Task<IActionResult> Get([FromRoute] Guid id)
+    public async Task<IActionResult> Get([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         var user = await context.Users
             .AsNoTracking()
@@ -52,12 +57,25 @@ public class UsersController(
         return Ok(userDto);
     }
 
-    // POST api/<UsersController>
+    // POST api/users
+    /// <summary>
+    /// Creates a new user.
+    /// </summary>
+    /// <param name="request">The request containing the new user's details.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>The newly created user as a DTO.</returns>
+    /// <remarks>
+    /// Sample request:
+    ///
+    ///     POST /users
+    ///     {
+    ///        "email": "diddy@gmail.com"
+    ///     }
+    /// </remarks>
     [AllowAnonymous]
     [HttpPost(Name = "CreateUser")]
-    [ProducesDefaultResponseType]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
-    public async Task<IActionResult> Post([FromBody] CreateUserRequest request)
+    public async Task<IActionResult> Post([FromBody] CreateUserRequest request, CancellationToken cancellationToken)
     {
         var user = new User
         {
@@ -71,12 +89,26 @@ public class UsersController(
         return CreatedAtAction(nameof(Get), new { id = user.Id }, user.MapToUserDto());
     }
 
-    // PUT api/<UsersController>/5
+    // PUT api/users/{id}
+    /// <summary>
+    /// Updates an existing user by ID.
+    /// </summary>
+    /// <param name="id">The unique identifier of the user.</param>
+    /// <param name="request">The request containing the updated details.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>No content if successful, otherwise 404 if not found.</returns>
+    /// <remarks>
+    /// Sample request:
+    ///
+    ///     PUT /users/5
+    ///     {
+    ///        "email": "daddy@gmail.com"
+    ///     }
+    /// </remarks>
     [HttpPut("{id}", Name = "UpdateUserById")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesDefaultResponseType]
-    public async Task<IActionResult> Put([FromRoute] Guid id, [FromBody] UpdateUserRequest request)
+    public async Task<IActionResult> Put([FromRoute] Guid id, [FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
     {
         var user = await context.Users.FindAsync(id, cancellationToken);
         if (user == null)
@@ -89,31 +121,36 @@ public class UsersController(
         return NoContent();
     }
 
-    // DELETE api/<UsersController>/5
+    // DELETE api/users/{id}
+    /// <summary>
+    /// Permanently deletes a user by ID.
+    /// </summary>
+    /// <param name="id">The unique identifier of the user.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>No content if successful, otherwise 404 if not found.</returns>
     [HttpDelete("{id}", Name = "DeleteUserById")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesDefaultResponseType]
-    public async Task<IActionResult> Delete([FromRoute] Guid id)
+    public async Task<IActionResult> Delete([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        var author = await context.Users.FindAsync(id, cancellationToken);
-        if (author == null)
+        var user = await context.Users.FindAsync(id, cancellationToken);
+        if (user == null)
             return NotFound(new { Message = $"User with ID {id} not found." });
 
-        context.Users.Remove(author);
-
+        context.Users.Remove(user);
         await context.SaveChangesAsync(cancellationToken);
+
         return NoContent();
     }
 
     // GET api/users/entities
     /// <summary>
-    /// Gets all users as entity objects (not DTOs).
+    /// Retrieves all users as entity objects (not DTOs).
     /// </summary>
-    /// <returns>All author entities</returns>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>A list of user entities.</returns>
     [HttpGet("entities", Name = "GetUsersEntities")]
     [ProducesResponseType(typeof(List<User>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetEntities(CancellationToken cancellationToken)
     {
         var users = await context.Users
@@ -122,6 +159,4 @@ public class UsersController(
 
         return Ok(users);
     }
-
-
 }

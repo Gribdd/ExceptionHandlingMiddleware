@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace ExceptionHandling.Services;
 
@@ -13,7 +14,15 @@ public class CurrentSessionProvider : ICurrentSessionProvider
 
     public CurrentSessionProvider(IHttpContextAccessor accessor)
     {
-        var userId = accessor.HttpContext?.User.FindFirstValue("userid");
+        //var userId = accessor.HttpContext?.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        var identity = accessor.HttpContext?.User.Identity as ClaimsIdentity;
+        if(identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        var userId = identity.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
         if (userId is null)
         {
             return;

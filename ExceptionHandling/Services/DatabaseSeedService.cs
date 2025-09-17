@@ -9,7 +9,6 @@ public class DatabaseSeedService
 {
     public static async Task SeedAsync(ApplicationDbContext dbContext)
     {
-        await dbContext.Database.MigrateAsync();
 
         if (await dbContext.Users.AnyAsync())
         {

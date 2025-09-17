@@ -4,8 +4,6 @@ using System.Text;
 using ExceptionHandling.Database;
 using ExceptionHandling.Database.Entities;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -20,6 +18,14 @@ public class AuthController(ApplicationDbContext context,
     CancellationToken cancellationToken = default) : ControllerBase
 {
     // POST: api/auth/login
+    /// <summary>
+    /// Authenticates a user by email and issues a JWT access token if the user exists.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns>
+    /// 200 OK with a JWT token if authentication succeeds, 
+    /// 401 Unauthorized if the email is invalid.
+    /// </returns>
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -50,8 +56,8 @@ public class AuthController(ApplicationDbContext context,
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Email), // subject = userId
-            new Claim("userid", user.Id.ToString())
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()), 
+            new Claim(JwtRegisteredClaimNames.Email, user.Email), 
         };
 
         var token = new JwtSecurityToken(

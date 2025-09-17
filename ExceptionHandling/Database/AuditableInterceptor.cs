@@ -54,12 +54,20 @@ public class AuditableInterceptor(ICurrentSessionProvider sessionProvider) : Sav
         var entries = context.ChangeTracker.Entries<IAuditableEntity>()
             .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified || e.State == EntityState.Deleted);
 
+        var excludedProps = new HashSet<string>
+        {
+            nameof(IAuditableEntity.CreatedAtUtc),
+            nameof(IAuditableEntity.UpdatedAtUtc),
+            nameof(IAuditableEntity.CreatedBy),
+            nameof(IAuditableEntity.UpdatedBy)
+        };
+
         var auditTrails = new List<AuditTrail>();
 
         foreach (var entry in entries)
         {
           
-            foreach (var prop in entry.Properties)
+            foreach (var prop in entry.Properties.Where(p => !excludedProps.Contains(p.Metadata.Name)))
             {
                 var audit = new AuditTrail
                 {

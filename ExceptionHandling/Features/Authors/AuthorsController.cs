@@ -1,10 +1,8 @@
-﻿using System.Threading;
-using ExceptionHandling.Database;
+﻿using ExceptionHandling.Database;
 using ExceptionHandling.Database.Entities;
 using ExceptionHandling.Mapping;
 using ExceptionHandling.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,11 +17,11 @@ public class AuthorsController(
     ApplicationDbContext context) 
     : ControllerBase
 {
-    // GET: api/<AuthorController>
     /// <summary>
-    /// Gets all authors
+    /// Retrieves all authors along with their books.
     /// </summary>
-    /// <returns>All authors</returns>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>A list of authors as DTOs.</returns>
     [HttpGet(Name = "GetAuthors")]
     [ProducesResponseType(typeof(List<AuthorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -40,11 +38,11 @@ public class AuthorsController(
 
     // GET api/<AuthorController>/5
     /// <summary>
-    /// Gets an Author by Id
+    /// Retrieves a specific author by ID, including their books.
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns>The author by Id</returns>
+    /// <param name="id">The unique identifier of the author.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>The author DTO if found, otherwise 404 Not Found.</returns>
     [HttpGet("{id}", Name = "GetAuthorById")]
     [ProducesResponseType(typeof(AuthorDto),StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -67,11 +65,11 @@ public class AuthorsController(
 
     // POST api/<AuthorController>
     /// <summary>
-    /// Creates an Author
+    /// Creates a new author.
     /// </summary>
-    /// <param name="request"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns>A newly created Author</returns>
+    /// <param name="request">The request object containing the author's details.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>The newly created author as a DTO.</returns>
     /// /// <remarks>
     /// Sample request:
     ///
@@ -100,12 +98,12 @@ public class AuthorsController(
 
     // PUT api/<AuthorController>/5
     /// <summary>
-    /// Updates an Author by Id
+    /// Updates the name of an existing author by ID.
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="request"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns>Not Found and No content when successful </returns>
+    /// <param name="id">The unique identifier of the author.</param>
+    /// <param name="request">The request object containing the updated details.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>No content if successful, otherwise 404 if not found.</returns>
     /// /// <remarks>
     /// Sample request:
     ///
@@ -134,11 +132,11 @@ public class AuthorsController(
 
     // DELETE api/<AuthorController>/5
     /// <summary>
-    /// Soft deletes an author by id
+    /// Permanently deletes an author by ID.
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns>No content when deleting successfully</returns>
+    /// <param name="id">The unique identifier of the author.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>No content if successful, otherwise 404 if not found.</returns>
 
     [HttpDelete("{id}", Name = "DeleteAuthorById")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -158,9 +156,10 @@ public class AuthorsController(
 
     // GET api/authors/entities
     /// <summary>
-    /// Gets all authors as entity objects (not DTOs).
+    /// Retrieves all authors as entity objects (with their books).
     /// </summary>
-    /// <returns>All author entities</returns>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>A list of author entities.</returns>
     [HttpGet("entities", Name = "GetAuthorsEntities")]
     [ProducesResponseType(typeof(List<Author>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
