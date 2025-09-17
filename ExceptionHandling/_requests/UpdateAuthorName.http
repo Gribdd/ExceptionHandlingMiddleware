@@ -1,0 +1,8 @@
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+PUT {{ExceptionHandling_HostAddress}}/authors/559b3678-cf7f-4baa-bdc9-cbcf132dcfd8
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "Name": "Updated Name"
+}

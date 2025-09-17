@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using ExceptionHandling.Database;
 using ExceptionHandling.Database.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace ExceptionHandling.Features.Authentication;
+
+[AllowAnonymous]
 [Route("api/auth")]
 [ApiController]
 public class AuthController(ApplicationDbContext context,
@@ -47,8 +50,8 @@ public class AuthController(ApplicationDbContext context,
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()), // subject = userId
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Email), // subject = userId
+            new Claim("userid", user.Id.ToString())
         };
 
         var token = new JwtSecurityToken(

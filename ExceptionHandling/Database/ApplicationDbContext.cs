@@ -1,18 +1,19 @@
 ﻿using ExceptionHandling.Database.Entities;
 using ExceptionHandling.Database.Mapping;
+using ExceptionHandling.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExceptionHandling.Database;
 
 public class ApplicationDbContext(
-    DbContextOptions<ApplicationDbContext> options) 
+    DbContextOptions<ApplicationDbContext> options,
+    ICurrentSessionProvider sessionProvider) 
     : DbContext(options)
 {
     public DbSet<Author> Authors { get; set; } = default!;
     public DbSet<Book> Books { get; set; } = default!;
     public DbSet<User> Users { get; set; } = default!;
     public DbSet<AuditTrail> AuditTrails { get; set; } = default!;
-
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +31,6 @@ public class ApplicationDbContext(
         var folder = Environment.SpecialFolder.LocalApplicationData;
         var path = Environment.GetFolderPath(folder);
         optionsBuilder.UseSqlite($"Data Source={System.IO.Path.Join(path, "test.db")}");
-        optionsBuilder.AddInterceptors(new AuditableInterceptor());
+        optionsBuilder.AddInterceptors(new AuditableInterceptor(sessionProvider));
     }
 }
